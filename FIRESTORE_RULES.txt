@@ -1,0 +1,71 @@
+FIRESTORE SECURITY RULES CONFIGURATION
+=====================================
+
+⚠️ IMPORTANT: You must update your Firestore Security Rules in the Firebase Console!
+
+The error "User document does not exist" indicates that your Firestore write is failing,
+likely due to restrictive security rules.
+
+HOW TO FIX:
+1. Go to Firebase Console: https://console.firebase.google.com/
+2. Select your project: "campus-event-df7db"
+3. Go to Firestore Database > Rules tab
+4. Replace the rules with the configuration below:
+
+COPY AND PASTE THIS CONFIGURATION:
+==================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read/write their own user document
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId;
+      allow create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId;
+      allow delete: if request.auth.uid == userId;
+    }
+
+    // Events collection - read for all, write for admins
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Registrations collection
+    match /registrations/{registrationId} {
+      allow read: if request.auth.uid == resource.data.userId;
+      allow create: if request.auth.uid == request.resource.data.userId;
+      allow update: if request.auth.uid == resource.data.userId;
+      allow delete: if request.auth.uid == resource.data.userId;
+    }
+
+    // Default deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+==================================
+
+FOR DEVELOPMENT ONLY (INSECURE - DO NOT USE IN PRODUCTION):
+If you want to quickly test without security rules, use:
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+
+AFTER UPDATING THE RULES:
+1. Click "Publish"
+2. Try registering again in the app
+3. Check the console logs - you should see "User data saved to Firestore successfully"
+
+If you still get errors, the rules provided above are more restrictive for production.
