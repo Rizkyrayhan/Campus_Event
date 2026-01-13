@@ -53,6 +53,7 @@ class DefaultFirebaseOptions {
     projectId: 'campus-event-df7db',
     authDomain: 'campus-event-df7db.firebaseapp.com',
     storageBucket: 'campus-event-df7db.firebasestorage.app',
+    databaseURL: 'https://campus-event-df7db-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -61,6 +62,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '322325479334',
     projectId: 'campus-event-df7db',
     storageBucket: 'campus-event-df7db.firebasestorage.app',
+    databaseURL: 'https://campus-event-df7db-default-rtdb.asia-southeast1.firebasedatabase.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -69,6 +71,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '322325479334',
     projectId: 'campus-event-df7db',
     storageBucket: 'campus-event-df7db.firebasestorage.app',
+    databaseURL: 'https://campus-event-df7db-default-rtdb.asia-southeast1.firebasedatabase.app',
     iosBundleId: 'com.example.campusEvent',
   );
 }

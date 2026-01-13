@@ -1,0 +1,18 @@
+{
+  "event1": {
+    "id": "event1",
+    "title": "Judul Event",
+    "description": "Deskripsi lengkap event ini",
+    "category": "Seminar",
+    "dateTime": "2023-12-31T18:00:00.000Z",
+    "location": "Lokasi Event",
+    "organizer": "Nama Penyelenggara",
+    "imageUrl": "https://ibb.co.com/Fq8Jt1c2",
+    "capacity": 100,
+    "registered": 25,
+    "speaker": "Pembicara Utama",
+    "contact": "081234567890",
+    "isFavorite": false,
+    "createdAt": "2023-12-01T10:00:00.000Z"
+  }
+}

@@ -30,9 +30,9 @@ class EventCard extends StatelessWidget {
               color: Colors.grey[300],
               child: Stack(
                 children: [
-                  Center(
-                    child: Icon(Icons.image, size: 80, color: Colors.grey[400]),
-                  ),
+                  // Image atau Placeholder
+                  _buildImageWidget(),
+                  
                   // Favorite Button
                   Positioned(
                     top: 8,
@@ -53,6 +53,7 @@ class EventCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                  
                   // Category Badge
                   Positioned(
                     top: 12,
@@ -79,6 +80,7 @@ class EventCard extends StatelessWidget {
                 ],
               ),
             ),
+            
             // Content
             Padding(
               padding: const EdgeInsets.all(12),
@@ -95,6 +97,7 @@ class EventCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
+                  
                   // Date
                   Row(
                     children: [
@@ -115,6 +118,7 @@ class EventCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
+                  
                   // Location
                   Row(
                     children: [
@@ -135,6 +139,7 @@ class EventCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  
                   // Capacity Info
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,7 +150,7 @@ class EventCard extends StatelessWidget {
                           minHeight: 6,
                           backgroundColor: Colors.grey[300],
                           valueColor: AlwaysStoppedAnimation(
-                            event.isFull ? Colors.red : Colors.red,
+                            event.isFull ? Colors.red : Colors.green,
                           ),
                         ),
                       ),
@@ -161,6 +166,69 @@ class EventCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Build image widget dengan error handling
+  Widget _buildImageWidget() {
+    // Validasi URL
+    if (event.imageUrl.isEmpty ||
+        event.imageUrl == 'https://via.placeholder.com/300x200?text=No+Image') {
+      return _buildPlaceholder();
+    }
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+      child: Image.network(
+        event.imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: 180,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('❌ Image load error for ${event.imageUrl}: $error');
+          return _buildPlaceholder();
+        },
+      ),
+    );
+  }
+
+  /// Placeholder jika image tidak bisa diload
+  Widget _buildPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 180,
+      color: Colors.grey[300],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported,
+            size: 60,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Gambar tidak tersedia',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

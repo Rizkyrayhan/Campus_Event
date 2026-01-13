@@ -53,19 +53,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              height: 250,
-              color: Colors.grey[300],
-              child: Center(
-                child: Icon(Icons.image, size: 100, color: Colors.grey[400]),
-              ),
-            ),
+            // Event Image
+            _buildEventImage(),
+
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Title
                   Text(
                     _event.title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -73,6 +69,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         ),
                   ),
                   const SizedBox(height: 12),
+
+                  // Category & Capacity
                   Row(
                     children: [
                       Chip(label: Text(_event.category)),
@@ -84,36 +82,48 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
+
+                  // Date & Time
                   _buildInfoRow(
                     icon: Icons.calendar_today,
                     title: 'Tanggal & Waktu',
                     value: _formatDateTime(_event.dateTime),
                   ),
                   const SizedBox(height: 16),
+
+                  // Location
                   _buildInfoRow(
                     icon: Icons.location_on,
                     title: 'Lokasi',
                     value: _event.location,
                   ),
                   const SizedBox(height: 16),
+
+                  // Speaker
                   _buildInfoRow(
                     icon: Icons.person,
                     title: 'Pembicara',
                     value: _event.speaker,
                   ),
                   const SizedBox(height: 16),
+
+                  // Contact
                   _buildInfoRow(
                     icon: Icons.phone,
                     title: 'Kontak',
                     value: _event.contact,
                   ),
                   const SizedBox(height: 16),
+
+                  // Organizer
                   _buildInfoRow(
                     icon: Icons.business,
                     title: 'Penyelenggara',
                     value: _event.organizer,
                   ),
                   const SizedBox(height: 24),
+
+                  // Capacity Progress
                   Text(
                     'Kapasitas Pendaftaran',
                     style: Theme.of(context).textTheme.titleSmall,
@@ -129,6 +139,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 24),
+
+                  // Description
                   Text(
                     'Deskripsi',
                     style: Theme.of(context).textTheme.titleSmall,
@@ -194,9 +206,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                               if (confirm == true && context.mounted) {
                                 try {
-                                  final registrations = 
-                                      await regProvider.getUserRegistrations(userId);
-                                  
+                                  final registrations =
+                                      await regProvider
+                                          .getUserRegistrations(userId);
+
                                   // Cari registration untuk event ini
                                   Registration? reg;
                                   try {
@@ -214,24 +227,29 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                     );
                                     setState(() {});
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         const SnackBar(
-                                          content: Text('Pendaftaran dibatalkan'),
+                                          content: Text(
+                                              'Pendaftaran dibatalkan'),
                                           backgroundColor: Colors.orange,
                                         ),
                                       );
                                     }
                                   } else if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
                                       const SnackBar(
-                                        content: Text('Registrasi tidak ditemukan'),
+                                        content: Text(
+                                            'Registrasi tidak ditemukan'),
                                         backgroundColor: Colors.red,
                                       ),
                                     );
                                   }
                                 } catch (e) {
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
                                       SnackBar(
                                         content: Text('Error: ${e.toString()}'),
                                         backgroundColor: Colors.red,
@@ -241,8 +259,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 }
                               }
                             } else {
-                              final success =
-                                  await regProvider.registerEvent(userId, _event.id);
+                              final success = await regProvider
+                                  .registerEvent(userId, _event.id);
                               if (success && context.mounted) {
                                 setState(() {});
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -265,17 +283,93 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             }
                           },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isRegistered ? Colors.orange : Colors.red,
+                    backgroundColor:
+                        isRegistered ? Colors.orange : Colors.red,
                     disabledBackgroundColor: Colors.grey,
                   ),
                   child: Text(
-                    isRegistered ? 'Batalkan Pendaftaran' : 'Daftar Sekarang',
+                    isRegistered
+                        ? 'Batalkan Pendaftaran'
+                        : 'Daftar Sekarang',
                   ),
                 );
               },
             );
           },
         ),
+      ),
+    );
+  }
+
+  /// Build event image dengan error handling
+  Widget _buildEventImage() {
+    if (_event.imageUrl.isEmpty ||
+        _event.imageUrl ==
+            'https://via.placeholder.com/300x200?text=No+Image') {
+      return _buildImagePlaceholder();
+    }
+
+    return Container(
+      width: double.infinity,
+      height: 250,
+      color: Colors.grey[300],
+      child: Image.network(
+        _event.imageUrl,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            return child;
+          }
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('❌ Image load error: $error');
+          debugPrint('📸 URL: ${_event.imageUrl}');
+          return _buildImagePlaceholder();
+        },
+      ),
+    );
+  }
+
+  /// Placeholder jika image gagal diload
+  Widget _buildImagePlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 250,
+      color: Colors.grey[300],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.image_not_supported,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Gambar tidak tersedia',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'URL: ${_event.imageUrl.length > 50 ? '${_event.imageUrl.substring(0, 50)}...' : _event.imageUrl}',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 10,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

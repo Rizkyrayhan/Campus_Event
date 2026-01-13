@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/event_model.dart';
 import '../services/event_service.dart';
@@ -9,6 +10,7 @@ class EventProvider extends ChangeNotifier {
   String _selectedCategory = 'Semua';
   bool _isLoading = false;
   String? _errorMessage;
+  StreamSubscription<List<Event>>? _eventsSub;
 
   List<Event> get events => _filteredEvents;
   List<Event> get allEvents => _allEvents;
@@ -17,56 +19,85 @@ class EventProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   EventProvider() {
-    loadEvents();
+    _subscribeEvents();
+  }
+
+  void _subscribeEvents() {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    _eventsSub?.cancel();
+    _eventsSub = _eventService.streamAllEvents().listen(
+      (events) {
+        _allEvents = events;
+        _filterEvents();
+        _isLoading = false;
+        _errorMessage = null;
+        notifyListeners();
+      },
+      onError: (e) {
+        _errorMessage = 'Gagal memuat event: ${e.toString()}';
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
   }
 
   Future<void> loadEvents() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
       _allEvents = await _eventService.getAllEvents();
-      await filterByCategory('Semua');
-      _errorMessage = null;
+      _filterEvents();
     } catch (e) {
-      _errorMessage = 'Gagal memuat event: $e';
+      _errorMessage = 'Gagal memuat event: ${e.toString()}';
+      _allEvents = [];
+      _filteredEvents = [];
     }
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _eventsSub?.cancel();
+    super.dispose();
   }
 
   Future<void> filterByCategory(String category) async {
     _selectedCategory = category;
-    _isLoading = true;
+    // Tidak perlu panggil service lagi, cukup filter dari data yang ada
+    _filterEvents();
     notifyListeners();
+  }
 
-    try {
-      _filteredEvents = await _eventService.getEventsByCategory(category);
-    } catch (e) {
-      _errorMessage = 'Gagal filter event: $e';
+  // Fungsi internal untuk melakukan filter
+  void _filterEvents() {
+    if (_selectedCategory == 'Semua') {
+      _filteredEvents = List.from(_allEvents);
+    } else {
+      _filteredEvents =
+          _allEvents.where((e) => e.category == _selectedCategory).toList();
     }
-
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<void> searchEvents(String query) async {
     if (query.isEmpty) {
-      await filterByCategory(_selectedCategory);
+      _filterEvents();
+      notifyListeners();
       return;
     }
 
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      _filteredEvents = await _eventService.searchEvents(query);
-    } catch (e) {
-      _errorMessage = 'Gagal mencari event: $e';
-    }
-
-    _isLoading = false;
+    final lowerQuery = query.toLowerCase();
+    _filteredEvents = _allEvents
+        .where((event) =>
+            event.title.toLowerCase().contains(lowerQuery) ||
+            event.description.toLowerCase().contains(lowerQuery))
+        .toList();
     notifyListeners();
   }
 

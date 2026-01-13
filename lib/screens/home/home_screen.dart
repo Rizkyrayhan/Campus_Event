@@ -18,6 +18,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Load events when screen initializes
+    Future.microtask(() {
+      context.read<EventProvider>().loadEvents();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -83,48 +92,111 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Expanded(
-                child: eventProvider.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : eventProvider.events.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.event_busy,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Tidak ada event',
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(8),
-                            itemCount: eventProvider.events.length,
-                            itemBuilder: (context, index) {
-                              final event = eventProvider.events[index];
-                              return EventCard(
-                                event: event,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          EventDetailScreen(event: event),
-                                    ),
-                                  );
+                child: Consumer<EventProvider>(
+                  builder: (context, eventProvider, _) {
+                    debugPrint('🔄 HomeScreen rebuilding - isLoading: ${eventProvider.isLoading}');
+                    debugPrint('📊 Events count: ${eventProvider.events.length}');
+                    debugPrint('❌ Error: ${eventProvider.errorMessage}');
+
+                    if (eventProvider.isLoading) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Memuat event...'),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (eventProvider.errorMessage != null) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Terjadi Kesalahan',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                eventProvider.errorMessage ?? '',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  eventProvider.loadEvents();
                                 },
-                                onFavorite: () {
-                                  eventProvider.toggleFavorite(event.id);
-                                },
-                              );
-                            },
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Coba Lagi'),
+                              ),
+                            ],
                           ),
+                        ),
+                      );
+                    }
+
+                    if (eventProvider.events.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.event_busy,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Tidak ada event',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Silakan cek kembali nanti',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(8),
+                      itemCount: eventProvider.events.length,
+                      itemBuilder: (context, index) {
+                        final event = eventProvider.events[index];
+                        return EventCard(
+                          event: event,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    EventDetailScreen(event: event),
+                              ),
+                            );
+                          },
+                          onFavorite: () {
+                            eventProvider.toggleFavorite(event.id);
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           );
