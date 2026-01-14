@@ -339,6 +339,42 @@ class EventService {
     }
   }
 
+  Future<bool> incrementRegistered(String eventId) async {
+    try {
+      final ref = _eventsRef.child(eventId).child('registered');
+      final snap = await ref.get();
+      int current = 0;
+      if (snap.exists && snap.value is int) {
+        current = snap.value as int;
+      }
+      final next = current + 1;
+      await ref.set(next);
+      debugPrint('✅ Registered +1 untuk event: $eventId (baru: $next)');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error increment registered untuk $eventId: $e');
+      return false;
+    }
+  }
+
+  Future<bool> decrementRegistered(String eventId) async {
+    try {
+      final ref = _eventsRef.child(eventId).child('registered');
+      final snap = await ref.get();
+      int current = 0;
+      if (snap.exists && snap.value is int) {
+        current = snap.value as int;
+      }
+      final next = current > 0 ? current - 1 : 0;
+      await ref.set(next);
+      debugPrint('✅ Registered -1 untuk event: $eventId (baru: $next)');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error decrement registered untuk $eventId: $e');
+      return false;
+    }
+  }
+
   Future<List<Event>> getFavoriteEvents() async {
     final allEvents = await getAllEvents();
     return allEvents.where((event) => event.isFavorite).toList();

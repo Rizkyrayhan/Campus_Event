@@ -94,34 +94,32 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: Consumer<EventProvider>(
                   builder: (context, eventProvider, _) {
-                    debugPrint('🔄 HomeScreen rebuilding - isLoading: ${eventProvider.isLoading}');
-                    debugPrint('📊 Events count: ${eventProvider.events.length}');
-                    debugPrint('❌ Error: ${eventProvider.errorMessage}');
+                    final onRefresh = () async {
+                      await eventProvider.loadEvents();
+                    };
+
+                    Widget content;
 
                     if (eventProvider.isLoading) {
-                      return const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Memuat event...'),
-                          ],
-                        ),
+                      content = ListView(
+                        children: const [
+                          SizedBox(height: 200),
+                          Center(child: CircularProgressIndicator()),
+                          SizedBox(height: 16),
+                          Center(child: Text('Memuat event...')),
+                        ],
                       );
-                    }
-
-                    if (eventProvider.errorMessage != null) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
+                    } else if (eventProvider.errorMessage != null) {
+                      content = ListView(
+                        padding: const EdgeInsets.all(16.0),
+                        children: [
+                          Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
                                 Icons.error_outline,
                                 size: 64,
-                                color: Colors.red[400],
+                                color: Colors.red, 
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -144,56 +142,61 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ],
                           ),
-                        ),
+                        ],
                       );
-                    }
-
-                    if (eventProvider.events.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.event_busy,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Tidak ada event',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Silakan cek kembali nanti',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: eventProvider.events.length,
-                      itemBuilder: (context, index) {
-                        final event = eventProvider.events[index];
-                        return EventCard(
-                          event: event,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    EventDetailScreen(event: event),
+                    } else if (eventProvider.events.isEmpty) {
+                      content = ListView(
+                        children: [
+                          const SizedBox(height: 100),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.event_busy,
+                                size: 64,
+                                color: Colors.grey,
                               ),
-                            );
-                          },
-                          onFavorite: () {
-                            eventProvider.toggleFavorite(event.id);
-                          },
-                        );
-                      },
+                              const SizedBox(height: 16),
+                              Text(
+                                'Tidak ada event',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Silakan cek kembali nanti',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    } else {
+                      content = ListView.builder(
+                        padding: const EdgeInsets.all(8),
+                        itemCount: eventProvider.events.length,
+                        itemBuilder: (context, index) {
+                          final event = eventProvider.events[index];
+                          return EventCard(
+                            event: event,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => EventDetailScreen(event: event),
+                                ),
+                              );
+                            },
+                            onFavorite: () {
+                              eventProvider.toggleFavorite(event.id);
+                            },
+                          );
+                        },
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: onRefresh,
+                      child: content,
                     );
                   },
                 ),

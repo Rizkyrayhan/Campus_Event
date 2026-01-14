@@ -17,16 +17,11 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  late Event _event;
-
-  @override
-  void initState() {
-    super.initState();
-    _event = widget.event;
-  }
 
   @override
   Widget build(BuildContext context) {
+    final eventProvider = context.watch<EventProvider>();
+    final currentEvent = eventProvider.getEventById(widget.event.id) ?? widget.event;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Event'),
@@ -35,14 +30,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             builder: (context, eventProvider, _) {
               return IconButton(
                 icon: Icon(
-                  _event.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _event.isFavorite ? Colors.red : null,
+                  currentEvent.isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: currentEvent.isFavorite ? Colors.red : null,
                 ),
                 onPressed: () {
-                  eventProvider.toggleFavorite(_event.id);
-                  setState(() {
-                    _event = _event.copyWith(isFavorite: !_event.isFavorite);
-                  });
+                  eventProvider.toggleFavorite(currentEvent.id);
                 },
               );
             },
@@ -54,7 +46,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Event Image
-            _buildEventImage(),
+            _buildEventImage(currentEvent),
 
             Padding(
               padding: const EdgeInsets.all(16),
@@ -63,7 +55,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 children: [
                   // Title
                   Text(
-                    _event.title,
+                    currentEvent.title,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -73,10 +65,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   // Category & Capacity
                   Row(
                     children: [
-                      Chip(label: Text(_event.category)),
+                      Chip(label: Text(currentEvent.category)),
                       const Spacer(),
                       Text(
-                        '${_event.registered}/${_event.capacity} peserta',
+                        '${currentEvent.registered}/${currentEvent.capacity} peserta',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -87,7 +79,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   _buildInfoRow(
                     icon: Icons.calendar_today,
                     title: 'Tanggal & Waktu',
-                    value: _formatDateTime(_event.dateTime),
+                    value: _formatDateTime(currentEvent.dateTime),
                   ),
                   const SizedBox(height: 16),
 
@@ -95,7 +87,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   _buildInfoRow(
                     icon: Icons.location_on,
                     title: 'Lokasi',
-                    value: _event.location,
+                    value: currentEvent.location,
                   ),
                   const SizedBox(height: 16),
 
@@ -103,7 +95,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   _buildInfoRow(
                     icon: Icons.person,
                     title: 'Pembicara',
-                    value: _event.speaker,
+                    value: currentEvent.speaker,
                   ),
                   const SizedBox(height: 16),
 
@@ -111,7 +103,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   _buildInfoRow(
                     icon: Icons.phone,
                     title: 'Kontak',
-                    value: _event.contact,
+                    value: currentEvent.contact,
                   ),
                   const SizedBox(height: 16),
 
@@ -119,7 +111,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   _buildInfoRow(
                     icon: Icons.business,
                     title: 'Penyelenggara',
-                    value: _event.organizer,
+                    value: currentEvent.organizer,
                   ),
                   const SizedBox(height: 24),
 
@@ -130,12 +122,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
-                    value: _event.capacityPercentage,
+                    value: currentEvent.capacityPercentage,
                     minHeight: 8,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${(_event.capacityPercentage * 100).toStringAsFixed(1)}% Terpenuhi',
+                    '${(currentEvent.capacityPercentage * 100).toStringAsFixed(1)}% Terpenuhi',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 24),
@@ -147,7 +139,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _event.description,
+                    currentEvent.description,
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.justify,
                   ),
@@ -172,13 +164,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             }
 
             return FutureBuilder<bool>(
-              future: regProvider.isUserRegistered(userId, _event.id),
+              future: regProvider.isUserRegistered(userId, currentEvent.id),
               builder: (context, snapshot) {
                 final isRegistered = snapshot.data ?? false;
 
                 return ElevatedButton(
                   onPressed:
-                      (_event.isFull && !isRegistered)
+                      (currentEvent.isFull && !isRegistered)
                           ? null
                           : () async {
                             if (isRegistered) {
@@ -214,7 +206,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                   Registration? reg;
                                   try {
                                     reg = registrations.firstWhere(
-                                      (r) => r.eventId == _event.id,
+                                      (r) => r.eventId == currentEvent.id,
                                     );
                                   } catch (e) {
                                     reg = null;
@@ -260,7 +252,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               }
                             } else {
                               final success = await regProvider
-                                  .registerEvent(userId, _event.id);
+                                  .registerEvent(userId, currentEvent.id);
                               if (success && context.mounted) {
                                 setState(() {});
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -302,11 +294,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   /// Build event image dengan error handling
-  Widget _buildEventImage() {
-    if (_event.imageUrl.isEmpty ||
-        _event.imageUrl ==
+  Widget _buildEventImage(Event event) {
+    if (event.imageUrl.isEmpty ||
+        event.imageUrl ==
             'https://via.placeholder.com/300x200?text=No+Image') {
-      return _buildImagePlaceholder();
+      return _buildImagePlaceholder(event.imageUrl);
     }
 
     return Container(
@@ -314,7 +306,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       height: 250,
       color: Colors.grey[300],
       child: Image.network(
-        _event.imageUrl,
+        event.imageUrl,
         fit: BoxFit.cover,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) {
@@ -331,15 +323,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         },
         errorBuilder: (context, error, stackTrace) {
           debugPrint('❌ Image load error: $error');
-          debugPrint('📸 URL: ${_event.imageUrl}');
-          return _buildImagePlaceholder();
+          debugPrint('📸 URL: ${event.imageUrl}');
+          return _buildImagePlaceholder(event.imageUrl);
         },
       ),
     );
   }
 
   /// Placeholder jika image gagal diload
-  Widget _buildImagePlaceholder() {
+  Widget _buildImagePlaceholder(String imageUrl) {
     return Container(
       width: double.infinity,
       height: 250,
@@ -362,7 +354,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'URL: ${_event.imageUrl.length > 50 ? '${_event.imageUrl.substring(0, 50)}...' : _event.imageUrl}',
+            'URL: ${imageUrl.length > 50 ? '${imageUrl.substring(0, 50)}...' : imageUrl}',
             style: TextStyle(
               color: Colors.grey[500],
               fontSize: 10,
