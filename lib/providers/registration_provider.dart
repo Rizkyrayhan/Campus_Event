@@ -5,7 +5,6 @@ import '../services/event_service.dart';
 
 class RegistrationProvider extends ChangeNotifier {
   final RegistrationService _registrationService = RegistrationService();
-  final EventService _eventService = EventService();
   List<Registration> _userRegistrations = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -35,19 +34,12 @@ class RegistrationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final success =
-          await _registrationService.registerEvent(userId, eventId);
+      final success = await _registrationService.registerEvent(userId, eventId);
       if (success) {
-        final incOk = await _eventService.incrementRegistered(eventId);
-        if (!incOk) {
-          debugPrint('❌ Gagal increment registered untuk event: $eventId');
-        } else {
-          debugPrint('✅ Registered incremented untuk event: $eventId');
-        }
         await loadUserRegistrations(userId);
         _errorMessage = null;
       } else {
-        _errorMessage = 'Anda sudah terdaftar di event ini';
+        _errorMessage = 'Gagal mendaftar: Anda mungkin sudah terdaftar';
       }
       _isLoading = false;
       notifyListeners();
@@ -68,19 +60,9 @@ class RegistrationProvider extends ChangeNotifier {
       final success = await _registrationService.cancelRegistration(registrationId);
       if (success) {
         final idx = _userRegistrations.indexWhere((r) => r.id == registrationId);
-        String? eventId;
         if (idx != -1) {
-          eventId = _userRegistrations[idx].eventId;
+          _userRegistrations[idx] = _userRegistrations[idx].copyWith(status: 'cancelled');
         }
-        if (eventId != null) {
-          final decOk = await _eventService.decrementRegistered(eventId);
-          if (!decOk) {
-            debugPrint('❌ Gagal decrement registered untuk event: $eventId');
-          } else {
-            debugPrint('✅ Registered decremented untuk event: $eventId');
-          }
-        }
-        _userRegistrations.removeWhere((r) => r.id == registrationId);
         _errorMessage = null;
       } else {
         _errorMessage = 'Gagal membatalkan pendaftaran';

@@ -15,7 +15,7 @@ class EventService {
 
   late final FirebaseDatabase _db;
   late final DatabaseReference _eventsRef;
-  bool _hasSeededData = false;
+
 
   EventService._internal() {
     final FirebaseApp app = Firebase.app();
@@ -23,167 +23,32 @@ class EventService {
     _db = FirebaseDatabase.instanceFor(app: app, databaseURL: dbUrl);
     _eventsRef = _db.ref('events');
     
-    // Seed data jika database kosong
-    _initializeDataIfNeeded();
-  }
 
-  /// Initialize database dengan data default jika kosong
-  Future<void> _initializeDataIfNeeded() async {
-    if (_hasSeededData) return;
-
-    try {
-      debugPrint('🔍 Checking if database has data...');
-      final snapshot = await _eventsRef.get();
-
-      if (!snapshot.exists || snapshot.value == null) {
-        debugPrint('📝 Database kosong, seeding data...');
-        await _seedInitialData();
-        _hasSeededData = true;
-        debugPrint('✅ Data seeding completed');
-      } else {
-        debugPrint('✅ Database sudah punya data');
-        _hasSeededData = true;
-      }
-    } catch (e) {
-      debugPrint('⚠️ Error checking database: $e');
-    }
-  }
-
-  /// Seed database dengan data awal
-  Future<void> _seedInitialData() async {
-    try {
-      final List<Map<String, dynamic>> dummyEventsData = [
-        {
-          'id': 'event1',
-          'title': 'Workshop Flutter Dasar',
-          'description':
-              'Workshop intensif belajar Flutter dari nol. Cocok untuk pemula yang ingin memulai mobile development. Materi mencakup widget basics, state management, dan networking.',
-          'category': 'Workshop',
-          'dateTime': '2024-02-15T14:00:00.000Z',
-          'location': 'Lab Komputer Lantai 2, Gedung A',
-          'organizer': 'Tim Development',
-          'imageUrl':
-              'https://via.placeholder.com/300x200?text=Workshop+Flutter',
-          'capacity': 50,
-          'registered': 35,
-          'speaker': 'Andi Wijaya',
-          'contact': '085123456789',
-          'isFavorite': false,
-          'createdAt': '2024-01-15T08:00:00.000Z',
-        },
-        {
-          'id': 'event2',
-          'title': 'Seminar Cloud Computing & AWS',
-          'description':
-              'Seminar mendalam tentang cloud computing dan praktik penggunaan AWS. Pembicara adalah expert dari industry tech besar dengan pengalaman 10+ tahun.',
-          'category': 'Seminar',
-          'dateTime': '2024-02-20T10:00:00.000Z',
-          'location': 'Auditorium Utama',
-          'organizer': 'Tech Community',
-          'imageUrl':
-              'https://via.placeholder.com/300x200?text=Cloud+Computing',
-          'capacity': 200,
-          'registered': 150,
-          'speaker': 'Dr. Budi Hartono',
-          'contact': '087654321098',
-          'isFavorite': false,
-          'createdAt': '2024-01-10T08:00:00.000Z',
-        },
-        {
-          'id': 'event3',
-          'title': 'Kompetisi UI/UX Design',
-          'description':
-              'Kompetisi desain untuk menampilkan kreativitas Anda dalam membuat interface yang menarik dan user-friendly. Hadiah total 10 juta rupiah.',
-          'category': 'Kompetisi',
-          'dateTime': '2024-03-01T08:00:00.000Z',
-          'location': 'Creative Hub, Lantai 3',
-          'organizer': 'Design Club',
-          'imageUrl':
-              'https://via.placeholder.com/300x200?text=UI+UX+Design',
-          'capacity': 100,
-          'registered': 45,
-          'speaker': 'Citra Desain',
-          'contact': '086111222333',
-          'isFavorite': false,
-          'createdAt': '2024-01-05T08:00:00.000Z',
-        },
-        {
-          'id': 'event4',
-          'title': 'Networking Session IT Leaders',
-          'description':
-              'Kesempatan networking dengan para pemimpin IT dari perusahaan terkemuka. Sharing pengalaman, job opportunities, dan business collaboration.',
-          'category': 'Networking',
-          'dateTime': '2024-02-25T17:00:00.000Z',
-          'location': 'Executive Room, Hotel Bintang Lima',
-          'organizer': 'IT Professionals Association',
-          'imageUrl':
-              'https://via.placeholder.com/300x200?text=Networking',
-          'capacity': 80,
-          'registered': 65,
-          'speaker': 'Multiple Speakers',
-          'contact': '088999888777',
-          'isFavorite': false,
-          'createdAt': '2024-01-12T08:00:00.000Z',
-        },
-        {
-          'id': 'event5',
-          'title': 'Workshop Data Science & Machine Learning',
-          'description':
-              'Workshop praktis machine learning menggunakan Python dan TensorFlow. Belajar tentang data preprocessing, model training, dan deployment.',
-          'category': 'Workshop',
-          'dateTime': '2024-03-10T13:00:00.000Z',
-          'location': 'Data Lab, Gedung B',
-          'organizer': 'Data Science Club',
-          'imageUrl':
-              'https://via.placeholder.com/300x200?text=Data+Science',
-          'capacity': 40,
-          'registered': 28,
-          'speaker': 'Prof. Eka Prasetya',
-          'contact': '085555666777',
-          'isFavorite': false,
-          'createdAt': '2024-01-08T08:00:00.000Z',
-        },
-      ];
-
-      // Upload semua event
-      for (var eventData in dummyEventsData) {
-        try {
-          await _eventsRef.child(eventData['id']).set(eventData);
-          debugPrint('✅ Event created: ${eventData['title']}');
-        } catch (e) {
-          debugPrint('❌ Error creating event ${eventData['id']}: $e');
-        }
-      }
-
-      debugPrint('🎉 All events seeded successfully!');
-    } catch (e) {
-      debugPrint('❌ Error seeding data: $e');
-    }
   }
 
   Future<List<Event>> getAllEvents() async {
     try {
-      debugPrint('🔄 Fetching events from Firebase Realtime Database...');
-      debugPrint('📍 Database URL: $_databaseUrl');
-      debugPrint('📁 Path: ${_eventsRef.path}');
+      debugPrint('Fetching events from Firebase Realtime Database...');
+      debugPrint('Database URL: $_databaseUrl');
+      debugPrint('Path: ${_eventsRef.path}');
 
       final snapshot = await _eventsRef.get();
 
-      debugPrint('✅ Snapshot exists: ${snapshot.exists}');
-      debugPrint('📊 Snapshot has children: ${snapshot.children.isNotEmpty}');
+      debugPrint('Snapshot exists: ${snapshot.exists}');
+      debugPrint('Snapshot has children: ${snapshot.children.isNotEmpty}');
 
       if (snapshot.exists && snapshot.value != null) {
         final dynamic value = snapshot.value;
         final List<Event> loadedEvents = [];
 
-        debugPrint('🔍 Data type: ${value.runtimeType}');
+        debugPrint('Data type: ${value.runtimeType}');
 
         if (value is Map) {
           debugPrint(
-              '📦 Processing Map/Object data with ${(value as Map).length} items');
+              'Processing Map/Object data with ${(value as Map).length} items');
           value.forEach((key, val) {
             try {
-              debugPrint('⚙️ Processing key: $key');
+              debugPrint('Processing key: $key');
               if (val is Map) {
                 final eventData = Map<String, dynamic>.from(val);
                 eventData['id'] = key.toString();
@@ -191,15 +56,15 @@ class EventService {
 
                 final event = Event.fromJson(eventData);
                 loadedEvents.add(event);
-                debugPrint('✨ Event loaded: ${event.title}');
+                debugPrint('Event loaded: ${event.title}');
               }
             } catch (e) {
-              debugPrint('❌ Error processing item $key: $e');
+              debugPrint('Error processing item $key: $e');
             }
           });
         } else if (value is List) {
           debugPrint(
-              '📦 Processing List/Array data with ${(value as List).length} items');
+              'Processing List/Array data with ${(value as List).length} items');
           for (var i = 0; i < value.length; i++) {
             try {
               if (value[i] != null && value[i] is Map) {
@@ -213,23 +78,23 @@ class EventService {
 
                 final event = Event.fromJson(eventData);
                 loadedEvents.add(event);
-                debugPrint('✨ Event loaded: ${event.title}');
+                debugPrint('Event loaded: ${event.title}');
               }
             } catch (e) {
-              debugPrint('❌ Error processing item $i: $e');
+              debugPrint('Error processing item $i: $e');
             }
           }
         }
 
-        debugPrint('🎉 Total events loaded: ${loadedEvents.length}');
+        debugPrint('Total events loaded: ${loadedEvents.length}');
         return loadedEvents;
       } else {
-        debugPrint('⚠️ No data found in Firebase');
+        debugPrint('No data found in Firebase');
         return [];
       }
     } catch (e, stackTrace) {
-      debugPrint('❌ Error getting events: $e');
-      debugPrint('📍 Stack trace: $stackTrace');
+      debugPrint('Error getting events: $e');
+      debugPrint('Stack trace: $stackTrace');
       rethrow;
     }
   }
@@ -241,17 +106,17 @@ class EventService {
       final snapshot = event.snapshot;
       final value = snapshot.value;
 
-      debugPrint('📡 Stream received data');
+      debugPrint('Stream received data');
 
       if (value == null) {
-        debugPrint('⚠️ Stream received null data');
+        debugPrint('Stream received null data');
         return <Event>[];
       }
 
       final List<Event> loadedEvents = [];
 
       if (value is Map) {
-        debugPrint('📦 Stream: Processing Map with ${(value as Map).length} items');
+        debugPrint('Stream: Processing Map with ${(value as Map).length} items');
         value.forEach((key, val) {
           try {
             if (val is Map) {
@@ -261,11 +126,11 @@ class EventService {
               loadedEvents.add(Event.fromJson(eventData));
             }
           } catch (e) {
-            debugPrint('❌ Stream error processing $key: $e');
+            debugPrint('Stream error processing $key: $e');
           }
         });
       } else if (value is List) {
-        debugPrint('📦 Stream: Processing List with ${(value as List).length} items');
+        debugPrint('Stream: Processing List with ${(value as List).length} items');
         for (var i = 0; i < value.length; i++) {
           try {
             if (value[i] != null && value[i] is Map) {
@@ -279,19 +144,19 @@ class EventService {
               loadedEvents.add(Event.fromJson(eventData));
             }
           } catch (e) {
-            debugPrint('❌ Stream error processing item $i: $e');
+            debugPrint('Stream error processing item $i: $e');
           }
         }
       }
 
-      debugPrint('🎉 Stream returned ${loadedEvents.length} events');
+      debugPrint('Stream returned ${loadedEvents.length} events');
       return loadedEvents;
     });
   }
 
   Future<Event?> getEventById(String id) async {
     try {
-      debugPrint('🔍 Fetching event by id: $id');
+      debugPrint('Fetching event by id: $id');
       final snapshot = await _eventsRef.child(id).get();
 
       if (snapshot.exists && snapshot.value != null) {
@@ -299,14 +164,14 @@ class EventService {
         eventData['id'] = id;
         _addDefaultFieldsExtended(eventData);
         final event = Event.fromJson(eventData);
-        debugPrint('✅ Event found: ${event.title}');
+        debugPrint('Event found: ${event.title}');
         return event;
       }
 
-      debugPrint('⚠️ Event not found: $id');
+      debugPrint('Event not found: $id');
       return null;
     } catch (e) {
-      debugPrint('❌ Error getting event by id: $e');
+      debugPrint('Error getting event by id: $e');
       return null;
     }
   }
@@ -333,9 +198,9 @@ class EventService {
   Future<void> updateFavoriteStatus(String eventId, bool isFavorite) async {
     try {
       await _eventsRef.child(eventId).update({'isFavorite': isFavorite});
-      debugPrint('✅ Favorite status updated for: $eventId');
+      debugPrint('Favorite status updated for: $eventId');
     } catch (e) {
-      debugPrint('❌ Error updating favorite: $e');
+      debugPrint('Error updating favorite: $e');
     }
   }
 
@@ -349,10 +214,10 @@ class EventService {
       }
       final next = current + 1;
       await ref.set(next);
-      debugPrint('✅ Registered +1 untuk event: $eventId (baru: $next)');
+      debugPrint('Registered +1 untuk event: $eventId (baru: $next)');
       return true;
     } catch (e) {
-      debugPrint('❌ Error increment registered untuk $eventId: $e');
+      debugPrint('Error increment registered untuk $eventId: $e');
       return false;
     }
   }
@@ -367,10 +232,10 @@ class EventService {
       }
       final next = current > 0 ? current - 1 : 0;
       await ref.set(next);
-      debugPrint('✅ Registered -1 untuk event: $eventId (baru: $next)');
+      debugPrint('Registered -1 untuk event: $eventId (baru: $next)');
       return true;
     } catch (e) {
-      debugPrint('❌ Error decrement registered untuk $eventId: $e');
+      debugPrint('Error decrement registered untuk $eventId: $e');
       return false;
     }
   }
@@ -407,24 +272,12 @@ class EventService {
     eventData['location'] ??= 'Location TBA';
   }
 
-  // Manual reset & reseed
-  Future<void> clearAndReseedDatabase() async {
-    try {
-      debugPrint('🗑️ Clearing all events...');
-      await _eventsRef.remove();
-      debugPrint('✅ All events cleared');
-      
-      _hasSeededData = false;
-      await _initializeDataIfNeeded();
-    } catch (e) {
-      debugPrint('❌ Error clearing database: $e');
-    }
-  }
+
 
   // Helper untuk debug
   Future<void> debugPrintDatabase() async {
     try {
-      debugPrint('\n========== 📊 DATABASE DEBUG INFO ==========');
+      debugPrint('\n========== DATABASE DEBUG INFO ==========');
       final snapshot = await _eventsRef.get();
       debugPrint('Exists: ${snapshot.exists}');
       debugPrint('Has children: ${snapshot.children.isNotEmpty}');

@@ -16,27 +16,27 @@ void main() async {
 
   try {
     // Initialize Firebase dengan options yang sesuai
-    debugPrint('🔥 Initializing Firebase...');
+    debugPrint('Initializing Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    debugPrint('✅ Firebase initialized successfully');
+    debugPrint('Firebase initialized successfully');
 
     // Initialize EventService - ini akan trigger seeding jika database kosong
-    debugPrint('🗄️ Initializing EventService...');
+    debugPrint('Initializing EventService...');
     EventService();
-    debugPrint('✅ EventService initialized (data seeding triggered if needed)');
+    debugPrint('EventService initialized (data seeding triggered if needed)');
   } catch (e) {
-    debugPrint('❌ Firebase initialization error: $e');
+    debugPrint('Firebase initialization error: $e');
   }
 
   try {
     // Initialize date formatting
-    debugPrint('🌍 Initializing date formatting...');
+    debugPrint('Initializing date formatting...');
     await initializeDateFormatting('id_ID', null);
-    debugPrint('✅ Date formatting initialized');
+    debugPrint('Date formatting initialized');
   } catch (e) {
-    debugPrint('❌ Date formatting error: $e');
+    debugPrint('Date formatting error: $e');
   }
 
   runApp(const CampusEventApp());
@@ -66,7 +66,7 @@ class _CampusEventAppState extends State<CampusEventApp> {
       debugPrint('🔍 Verifying Firebase initialization...');
 
       final app = Firebase.app();
-      debugPrint('✅ Firebase app verified: ${app.name}');
+      debugPrint('Firebase app verified: ${app.name}');
 
       // Verifikasi koneksi dengan mencoba query ke database
       _verifyDatabaseConnection();
@@ -77,7 +77,7 @@ class _CampusEventAppState extends State<CampusEventApp> {
         });
       }
     } catch (e) {
-      debugPrint('❌ Bootstrap error: $e');
+      debugPrint('Bootstrap error: $e');
       setState(() {
         _initError = true;
         _errorMessage = e.toString();
@@ -87,11 +87,11 @@ class _CampusEventAppState extends State<CampusEventApp> {
 
   Future<void> _verifyDatabaseConnection() async {
     try {
-      debugPrint('🔗 Testing database connection...');
+      debugPrint('Testing database connection...');
       // Test koneksi dengan membaca root
-      debugPrint('✅ Database connection test passed');
+      debugPrint('Database connection test passed');
     } catch (e) {
-      debugPrint('⚠️ Database connection test: $e');
+      debugPrint('Database connection test: $e');
     }
   }
 
@@ -179,9 +179,7 @@ class _CampusEventAppState extends State<CampusEventApp> {
           builder: (context, authProvider, _) {
             if (authProvider.isInitializing) {
               return const Scaffold(
-                body: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                body: Center(child: CircularProgressIndicator()),
               );
             }
 
