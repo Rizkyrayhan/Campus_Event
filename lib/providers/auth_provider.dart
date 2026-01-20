@@ -11,7 +11,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isInitializing = true;
   String? _errorMessage;
   String? _successMessage;
-  
+
   // Untuk menyimpan credentials saat perlu kirim ulang email
   String? _pendingEmail;
   String? _pendingPassword;
@@ -71,29 +71,31 @@ class AuthProvider extends ChangeNotifier {
           email: firebaseUser.email ?? '',
           fullName: userData['fullName'] ?? firebaseUser.displayName ?? 'User',
           nim: userData['nim'] ?? '',
-          phoneNumber: userData['phoneNumber'] ?? firebaseUser.phoneNumber ?? '',
+          phoneNumber:
+              userData['phoneNumber'] ?? firebaseUser.phoneNumber ?? '',
           faculty: userData['faculty'] ?? '',
           photoUrl: firebaseUser.photoURL ?? userData['photoUrl'] ?? '',
-          createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
-          isEmailVerified: firebaseUser.emailVerified,
-        );
-      } else {
-        return User(
-          id: firebaseUser.uid,
-          email: firebaseUser.email ?? '',
-          fullName: firebaseUser.displayName ?? 'User',
-          nim: '',
-          phoneNumber: firebaseUser.phoneNumber ?? '',
-          faculty: '',
-          photoUrl: firebaseUser.photoURL ?? '',
           createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
           isEmailVerified: firebaseUser.emailVerified,
         );
       }
     } catch (e) {
       print('Error getting user data: $e');
-      return null;
+      // Jangan return null, tapi return data dari firebaseAuth sebagai fallback
     }
+
+    // Fallback jika userData null atau terjadi error
+    return User(
+      id: firebaseUser.uid,
+      email: firebaseUser.email ?? '',
+      fullName: firebaseUser.displayName ?? 'User',
+      nim: '',
+      phoneNumber: firebaseUser.phoneNumber ?? '',
+      faculty: '',
+      photoUrl: firebaseUser.photoURL ?? '',
+      createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+      isEmailVerified: firebaseUser.emailVerified,
+    );
   }
 
   /// Login - hanya bisa jika email sudah diverifikasi
@@ -104,20 +106,29 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _authService.login(
-        email: email,
-        password: password,
-      );
+      final result = await _authService.login(email: email, password: password);
 
       if (result['success'] == true) {
         fb.User? firebaseUser = _authService.currentUser;
         if (firebaseUser != null) {
           _currentUser = await _getUserData(firebaseUser);
+
+          // Double check: if _getUserData returned null (it shouldn't anymore), set error
+          if (_currentUser == null) {
+            _errorMessage = "Gagal memuat data pengguna.";
+            _isLoading = false;
+            notifyListeners();
+            return {
+              'success': false,
+              'message': _errorMessage,
+              'needsVerification': false,
+            };
+          }
         }
         _successMessage = result['message'];
       } else {
         _errorMessage = result['message'];
-        
+
         // Simpan email untuk keperluan resend verification
         if (result['needsVerification'] == true) {
           _pendingEmail = email;
@@ -179,10 +190,7 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = e.toString().replaceFirst('Exception: ', '');
       _isLoading = false;
       notifyListeners();
-      return {
-        'success': false,
-        'message': _errorMessage,
-      };
+      return {'success': false, 'message': _errorMessage};
     }
   }
 
@@ -217,10 +225,7 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
-      return {
-        'success': false,
-        'message': _errorMessage,
-      };
+      return {'success': false, 'message': _errorMessage};
     }
   }
 
@@ -270,13 +275,13 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final result = await _authService.sendPasswordResetEmail(email);
-      
+
       if (result['success'] == true) {
         _successMessage = result['message'];
       } else {
         _errorMessage = result['message'];
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return result['success'] == true;

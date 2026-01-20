@@ -63,7 +63,7 @@ class RegistrationService {
       await EventService().incrementRegistered(eventId);
       return true;
     } catch (e) {
-      debugPrint('❌ registerEvent error: $e');
+      debugPrint('registerEvent error: $e');
       return false;
     }
   }
@@ -85,7 +85,7 @@ class RegistrationService {
       }
       return true;
     } catch (e) {
-      debugPrint('❌ cancelRegistration error: $e');
+      debugPrint('cancelRegistration error: $e');
       return false;
     }
   }
@@ -110,7 +110,7 @@ class RegistrationService {
       }
       return list;
     } catch (e) {
-      debugPrint('❌ getUserRegistrations error: $e');
+      debugPrint('getUserRegistrations error: $e');
       return [];
     }
   }
@@ -129,7 +129,7 @@ class RegistrationService {
       }
       return false;
     } catch (e) {
-      debugPrint('❌ isUserRegistered error: $e');
+      debugPrint('isUserRegistered error: $e');
       return false;
     }
   }
@@ -150,7 +150,7 @@ class RegistrationService {
       }
       return Registration.fromJson(m);
     } catch (e) {
-      debugPrint('❌ getRegistration error: $e');
+      debugPrint('getRegistration error: $e');
       return null;
     }
   }
